@@ -251,6 +251,9 @@ class Metric(metaclass=MetricMeta):
     def __init__(self, ordering=None):
         self.ordering = ordering or self.ordering
 
+    def __repr__(self):
+        return '<Metric "%s">' % self.label
+
     @cached_property
     def full_sql(self):
         """
@@ -315,6 +318,12 @@ class Metric(metaclass=MetricMeta):
             return 'ORDER BY ' + ', '.join(ordering)
         return ''
 
+    def get_record_style(self, record):
+        return ''
+
+    def get_record_item_style(self, record, item, index):
+        return ''
+
 
 class CacheHitsMetric(Metric):
     """
@@ -351,6 +360,15 @@ class CacheHitsMetric(Metric):
         ;
     '''
 
+    def get_record_item_style(self, record, item, index):
+        if index == 2 and item != 'N/A':
+            ratio = float(item)
+            if ratio < 0.95:
+                return 'critical'
+            if ratio < 0.99:
+                return 'warning'
+            return 'ok'
+
 
 registry.register(CacheHitsMetric)
 
@@ -372,8 +390,8 @@ class IndexUsageMetric(Metric):
     sql = '''
         SELECT
             relname,
-            100 * idx_scan / (seq_scan + idx_scan) percent_of_times_index_used,
-            n_live_tup rows_in_table
+            100 * idx_scan / (seq_scan + idx_scan) "percent of times index used",
+            n_live_tup "rows in table"
         FROM
             pg_stat_user_tables
         WHERE
@@ -381,6 +399,16 @@ class IndexUsageMetric(Metric):
         {ORDER_BY}
         ;
     '''
+
+    def get_record_style(self, record):
+        if record[2]:
+            usage = record[1]
+            rowcount = record[2]
+            if rowcount > 10:
+                if usage < 95:
+                    return 'critical'
+                if usage < 0.99:
+                    return 'warning'
 
 
 registry.register(IndexUsageMetric)

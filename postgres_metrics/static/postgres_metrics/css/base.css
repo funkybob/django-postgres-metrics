@@ -15,3 +15,18 @@
     padding-left: 16px;
     background: url(../../admin/img/search.svg) 0 1px no-repeat;
 }
+
+tr.record.record-critical,
+tr.record td.item-critical {
+    background-color: #ffefef;
+}
+
+tr.record.record-warning,
+tr.record td.item-warning {
+    background-color: #ffffcc;
+}
+
+tr.record.record-ok,
+tr.record td.item-ok {
+    background-color: #ddffdd;
+}
